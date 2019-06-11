@@ -6,18 +6,22 @@ int add(int a, int b)=> a+b;
 
 abstract class Event {
   final String url;
-  const Event(this.url);
+  final String name;
+  const Event(this.url, this.name);
+  
 
   bool isComplete();
   double percentage();
 }
+
+
 
 class OngoingEvent extends Event {
   final int total;
   final int loaded;
   final bool computable;
 
-  const OngoingEvent(String url, this.total, this.loaded,this.computable):super(url);
+  const OngoingEvent(String url, this.total, this.loaded,this.computable):super(url,"OngoingEvent");
 
   double percentage() =>computable?loaded/total: null;
 
@@ -26,7 +30,7 @@ class OngoingEvent extends Event {
 
 class CompleteEvent<T> extends Event {
   final T data;
-  const CompleteEvent(String url, this.data):super(url);
+  const CompleteEvent(String url, this.data):super(url,"CompleteEvent");
 
   bool isComplete() => true;
 
@@ -35,7 +39,7 @@ class CompleteEvent<T> extends Event {
 
 class ErrorEvent<E> extends Event {
   final E error;
-  const ErrorEvent(String url, this.error):super(url);
+  const ErrorEvent(String url, this.error):super(url,"ErrorEvent");
   
   bool isComplete() =>false;
   double percentage() => null;
