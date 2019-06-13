@@ -29,7 +29,6 @@ DrawFunction clear(int width, int height) {
   };
 }
 
-
 class Keyboard {
   final Set<int> _keys = Set<int>();
 
@@ -68,112 +67,111 @@ class Direction {
 }
 
 class Snake {
-  var keyboard = new Keyboard();
   static const int START_LENGTH = 6;
-  var _dir = Direction.RIGHT;
-  List<Point> _body;
-  
   int maxX;
   int maxY;
 
+  var _dir = Direction.RIGHT;
+  List<Point> _body;
+
   Snake(this.maxX, this.maxY) {
-    _body = List<Point>.generate(START_LENGTH, (int idx) => Point(START_LENGTH - idx - 1, 0));
+    _body = List<Point>.generate(
+        START_LENGTH, (int idx) => Point(START_LENGTH - idx - 1, 0));
   }
 
   Point get head => _body.first;
 
-  void _checkInput(){
-      _dir = Direction.change(keyboard, _dir);
+  void _checkInput(Keyboard keyboard) {
+    _dir = Direction.change(keyboard, _dir);
   }
 
-  void grow(){
+  void grow() {
     _body.insert(0, head + _dir);
   }
 
-  void _move(){
+  void _move() {
     grow();
     _body.removeLast();
   }
 
-  void _draw(CanvasRenderingContext2D ctx){
-    for(Point p in _body){
+  void _draw(CanvasRenderingContext2D ctx) {
+    for (Point p in _body) {
       drawCell(p, "green")(ctx);
     }
   }
 
-  bool checkForBodyCollision(){
-    return _body.skip(1).any((p) =>  p==head);
+  bool biteItself() {
+    return _body.skip(1).any((p) => p == head);
   }
 
-  void update(CanvasRenderingContext2D ctx){
-    _checkInput();
+  void update(CanvasRenderingContext2D ctx, Keyboard keyboard) {
+    _checkInput(keyboard);
     _move();
     _draw(ctx);
   }
 
-  bool hitEdge(){
-    return head.x < 0 || head.x >=maxX || head.y < 0 || head.y >= maxY;
+  bool hitEdge() {
+    return head.x < 0 || head.x >= maxX || head.y < 0 || head.y >= maxY;
   }
 }
 
 typedef Point GenFood();
-GenFood foodGen(int maxX, int maxY){
+GenFood foodGen(int maxX, int maxY) {
   Random _random = Random();
-  return (){
-     return Point(_random.nextInt(maxX), _random.nextInt(maxY));
+  return () {
+    return Point(_random.nextInt(maxX), _random.nextInt(maxY));
   };
 }
 
 class Game {
   static const num GAME_SPEED = 50;
-  num _lastTimeStamp = 0;
-
-  GenFood _foodGen;
-
-  Snake _snake;
-  Point _food;
 
   int width;
   int height;
+  GenFood _foodGen;
 
-  
+  DrawFunction _clear;
 
-  Game(this.width, this.height){
-    final maxX = width ~/CELL_SIZE;
-    final maxY = height ~/CELL_SIZE;
+  Snake _snake;
+  Point _food;
+  num _lastTimeStamp = 0;
+
+  Game(this.width, this.height) {
+    final maxX = width ~/ CELL_SIZE;
+    final maxY = height ~/ CELL_SIZE;
     _foodGen = foodGen(maxX, maxY);
     _snake = new Snake(maxX, maxY);
+    _clear = clear(width, height);
     _food = _foodGen();
   }
 
-  
-  void _checkForCollisions(){
-    if(_snake.head == _food){
+  void _checkForCollisions() {
+    if (_snake.head == _food) {
       _snake.grow();
       _food = _foodGen();
     }
 
-    if(_snake.hitEdge() || _snake.checkForBodyCollision()){
-      _snake = new Snake(width ~/CELL_SIZE,height ~/CELL_SIZE);
-       _food = _foodGen();
+    if (_snake.hitEdge() || _snake.biteItself()) {
+      _snake = new Snake(width ~/ CELL_SIZE, height ~/ CELL_SIZE);
+      _food = _foodGen();
     }
   }
 
-  Future run(CanvasRenderingContext2D ctx) async {
+  Future run(CanvasRenderingContext2D ctx, Keyboard keyboard) async {
     var timeElasped = await window.animationFrame;
-    update(timeElasped, ctx);
+    update(timeElasped, ctx, keyboard);
   }
 
-  void update(num timeElapsed, CanvasRenderingContext2D ctx){
+  void update(
+      num timeElapsed, CanvasRenderingContext2D ctx, Keyboard keyboard) {
     final diff = timeElapsed - _lastTimeStamp;
-    if(diff> GAME_SPEED){
+    if (diff > GAME_SPEED) {
       _lastTimeStamp = timeElapsed;
-      clear(this.width, this.height)(ctx);
+      _clear(ctx);
       drawCell(_food, "blue")(ctx);
-      _snake.update(ctx);
+      _snake.update(ctx, keyboard);
       _checkForCollisions();
     }
-    run(ctx);
+    run(ctx, keyboard);
   }
-
 }
