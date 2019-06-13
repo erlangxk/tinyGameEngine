@@ -7,27 +7,23 @@ const int CELL_SIZE = 10;
 typedef void DrawFunction(CanvasRenderingContext2D ctx);
 
 DrawFunction drawCell(Point corrds, String color) {
+  final int x = corrds.x * CELL_SIZE;
+  final int y = corrds.y * CELL_SIZE;
   return (CanvasRenderingContext2D ctx) {
     ctx
       ..fillStyle = color
       ..strokeStyle = "white";
-
-    final int x = corrds.x * CELL_SIZE;
-    final int y = corrds.y * CELL_SIZE;
-
     ctx
       ..fillRect(x, y, CELL_SIZE, CELL_SIZE)
       ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
   };
 }
 
-DrawFunction clear(int width, int height) {
-  return (CanvasRenderingContext2D ctx) {
-    ctx
+final clear = (int width, int height) =>   (CanvasRenderingContext2D ctx) =>
+   ctx
       ..fillStyle = "white"
       ..fillRect(0, 0, width, height);
-  };
-}
+
 
 class Keyboard {
   final Set<int> _keys = Set<int>();
