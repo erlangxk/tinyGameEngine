@@ -4,12 +4,12 @@ import 'dart:async';
 
 const int CELL_SIZE = 10;
 
-typedef void DrawFunction(CanvasRenderingContext2D ctx);
+typedef void DrawFunction(Point corrds, String color);
 
-DrawFunction drawCell(Point corrds, String color) {
-  final int x = corrds.x * CELL_SIZE;
-  final int y = corrds.y * CELL_SIZE;
-  return (CanvasRenderingContext2D ctx) {
+DrawFunction drawCell(CanvasRenderingContext2D ctx) {
+  return (Point corrds, String color) {
+    final int x = corrds.x * CELL_SIZE;
+    final int y = corrds.y * CELL_SIZE;
     ctx
       ..fillStyle = color
       ..strokeStyle = "white";
@@ -19,11 +19,11 @@ DrawFunction drawCell(Point corrds, String color) {
   };
 }
 
-final clear = (int width, int height) =>   (CanvasRenderingContext2D ctx) =>
-   ctx
-      ..fillStyle = "white"
-      ..fillRect(0, 0, width, height);
-
+void clear(int width, int height, CanvasRenderingContext2D ctx) {
+  ctx
+    ..fillStyle = "white"
+    ..fillRect(0, 0, width, height);
+}
 
 class Keyboard {
   final Set<int> _keys = Set<int>();
@@ -66,11 +66,12 @@ class Snake {
   static const int START_LENGTH = 6;
   int maxX;
   int maxY;
+   DrawFunction drawCell;
 
   var _dir = Direction.RIGHT;
   List<Point> _body;
 
-  Snake(this.maxX, this.maxY) {
+  Snake(this.maxX, this.maxY,this.drawCell) {
     _body = List<Point>.generate(
         START_LENGTH, (int idx) => Point(START_LENGTH - idx - 1, 0));
   }
@@ -90,9 +91,9 @@ class Snake {
     _body.removeLast();
   }
 
-  void _draw(CanvasRenderingContext2D ctx) {
+  void _draw() {
     for (Point p in _body) {
-      drawCell(p, "green")(ctx);
+      drawCell(p, "green");
     }
   }
 
@@ -100,10 +101,10 @@ class Snake {
     return _body.skip(1).any((p) => p == head);
   }
 
-  void update(CanvasRenderingContext2D ctx, Keyboard keyboard) {
+  void update(Keyboard keyboard) {
     _checkInput(keyboard);
     _move();
-    _draw(ctx);
+    _draw();
   }
 
   bool hitEdge() {
@@ -119,6 +120,8 @@ GenFood foodGen(int maxX, int maxY) {
   };
 }
 
+typedef void ClearFunction();
+
 class Game {
   static const num GAME_SPEED = 50;
 
@@ -126,18 +129,21 @@ class Game {
   int height;
   GenFood _foodGen;
 
-  DrawFunction _clear;
+  ClearFunction _clear;
 
   Snake _snake;
   Point _food;
   num _lastTimeStamp = 0;
 
-  Game(this.width, this.height) {
+  DrawFunction _drawCell;
+
+  Game(this.width, this.height, CanvasRenderingContext2D ctx) {
     final maxX = width ~/ CELL_SIZE;
     final maxY = height ~/ CELL_SIZE;
     _foodGen = foodGen(maxX, maxY);
-    _snake = new Snake(maxX, maxY);
-    _clear = clear(width, height);
+    _drawCell = drawCell(ctx);
+    _snake = new Snake(maxX, maxY,this._drawCell);
+    _clear = () => clear(width, height, ctx);
     _food = _foodGen();
   }
 
@@ -148,26 +154,26 @@ class Game {
     }
 
     if (_snake.hitEdge() || _snake.biteItself()) {
-      _snake = new Snake(width ~/ CELL_SIZE, height ~/ CELL_SIZE);
+      _snake = new Snake(width ~/ CELL_SIZE, height ~/ CELL_SIZE,_drawCell);
       _food = _foodGen();
     }
   }
 
-  Future run(CanvasRenderingContext2D ctx, Keyboard keyboard) async {
+  Future run(Keyboard keyboard) async {
     var timeElasped = await window.animationFrame;
-    update(timeElasped, ctx, keyboard);
+    update(timeElasped, keyboard);
   }
 
   void update(
-      num timeElapsed, CanvasRenderingContext2D ctx, Keyboard keyboard) {
+      num timeElapsed,Keyboard keyboard) {
     final diff = timeElapsed - _lastTimeStamp;
     if (diff > GAME_SPEED) {
       _lastTimeStamp = timeElapsed;
-      _clear(ctx);
-      drawCell(_food, "blue")(ctx);
-      _snake.update(ctx, keyboard);
+      _clear();
+      _drawCell(_food, "blue");
+      _snake.update(keyboard);
       _checkForCollisions();
     }
-    run(ctx, keyboard);
+    run(keyboard);
   }
 }

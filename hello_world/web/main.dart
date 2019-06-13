@@ -6,8 +6,8 @@ void main() {
   CanvasElement canvas = querySelector("#canvas");
   CanvasRenderingContext2D ctx = canvas.getContext('2d');
   Keyboard keyboard = Keyboard();
-  var game=Game(canvas.width, canvas.height);
-  game.run(ctx, keyboard);
+  var game=Game(canvas.width, canvas.height, ctx);
+  game.run(keyboard);
 
 }
 
