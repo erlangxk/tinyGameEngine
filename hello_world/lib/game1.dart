@@ -178,3 +178,9 @@ class Game {
     run(keyboard);
   }
 }
+
+void runGame1(){
+  CanvasElement canvas = querySelector("#canvas");
+  CanvasRenderingContext2D ctx = canvas.getContext('2d');
+  Game(canvas.width, canvas.height, ctx).run( Keyboard());
+}
