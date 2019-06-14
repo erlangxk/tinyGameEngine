@@ -195,19 +195,39 @@ class UI {
 
   void createLeeterButtons() {
     generateAlphabet().forEach((String letter) {
-      lettersRef.append(new ButtonElement()
+      var btn = ButtonElement()
         ..classes.add("letter-btn")
         ..text = letter
         ..onClick.listen((MouseEvent event) {
-          (event.target as ButtonElement).disabled = true;
+          disableOneButton(event.target as ButtonElement);
           game.guessLetter(letter);
-        }));
+        });
+      enableOneButton(btn);
+      lettersRef.append(btn);
     });
+  }
+
+  void enableOneButton(ButtonElement button) {
+    button.disabled = false;
+    button.style.backgroundColor = 'white';
+  }
+
+  void disableOneButton(ButtonElement button) {
+    button.disabled = true;
+    button.style.backgroundColor = 'red';
+  }
+
+  void toggleButton(bool enable, ButtonElement button) {
+    if (enable) {
+      enableOneButton(button);
+    } else {
+      disableOneButton(button);
+    }
   }
 
   void enableLetterButtons([bool enable = true]) {
     lettersRef.children
-        .forEach((Element btn) => (btn as ButtonElement).disabled = !enable);
+        .forEach((Element btn) => toggleButton(enable, (btn as ButtonElement)));
   }
 
   void updateWordDisplay(String word) {
